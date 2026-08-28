@@ -72,6 +72,9 @@ export default function GroupSessionPage() {
   const finishedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 800, scale: 1 });
+  
+  // Store latest transcript in ref to avoid stale closure
+  const latestTranscriptRef = useRef<string>("");
 
   // Computed values
   const currentPresenter = members.find((m) => m.user_id === room?.active_presenter_id);
@@ -80,6 +83,11 @@ export default function GroupSessionPage() {
   const canControlSlide = isMyTurn && myAssignment;
 
   const fullTranscript = finalParts.join(" ") + (interimText ? " " + interimText : "");
+  
+  // Update ref whenever transcript changes
+  useEffect(() => {
+    latestTranscriptRef.current = fullTranscript;
+  }, [fullTranscript]);
 
   // Load room data from database
   useEffect(() => {
@@ -256,21 +264,37 @@ export default function GroupSessionPage() {
     
     finishedRef.current = true;
 
-    // Stop recording
+    // Stop recording and ensure all data is flushed
     if (timerRef.current) clearInterval(timerRef.current);
+    
+    // CRITICAL: Request final data from MediaRecorder before stopping
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      // Request any pending data
+      mediaRecorderRef.current.requestData();
+      
+      // Wait a bit for requestData to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now stop
       mediaRecorderRef.current.stop();
     }
+    
+    // Close Deepgram connection (this will trigger final transcripts)
     deepgramRef.current?.close();
+    
+    // Stop all audio tracks
     streamRef.current?.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
 
-    // CRITICAL FIX: Wait for Deepgram to finalize transcription
-    // This prevents race condition where transcript is still being processed
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // CRITICAL FIX: Wait longer for Deepgram to finalize ALL transcription
+    // Increased from 1s to 2s to ensure all chunks are processed
+    console.log('[GroupSession] Waiting for Deepgram to finalize...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const actualDuration = Math.round((Date.now() - startTimeRef.current) / 1000);
-    const transcript = finalParts.join(" ") + (interimText ? " " + interimText : "");
+    
+    // CRITICAL: Use ref to get latest transcript (avoid stale closure)
+    const transcript = latestTranscriptRef.current;
     const hasTranscript = transcript.trim().length > 0;
     
     // DEBUG: Log transcript for troubleshooting
@@ -279,7 +303,8 @@ export default function GroupSessionPage() {
       interimTextLength: interimText.length,
       transcriptLength: transcript.length,
       hasTranscript,
-      transcript: transcript.slice(0, 100) + '...',
+      transcript: transcript.slice(0, 200) + '...',
+      fullTranscript: transcript, // Full transcript for debugging
     });
     const fillerData = hasTranscript
       ? countFillerWords(transcript)
