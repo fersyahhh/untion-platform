@@ -13,8 +13,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Zap,
+  Download,
 } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
+import { exportEvaluationToPDF } from "../../../lib/pdfExport";
 import logoUntion from "../../../assets/icon-untion.png";
 
 interface Aspect {
@@ -46,6 +48,7 @@ export default function GroupResultPage() {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<SessionResult[]>([]);
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -113,6 +116,35 @@ export default function GroupResultPage() {
     }
   }, [roomId]);
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    const loadingToast = toast.loading("Generating PDF...");
+    
+    try {
+      // Verify element exists
+      const element = document.getElementById('evaluation-result');
+      if (!element) {
+        throw new Error("Evaluation content not found. Please refresh the page.");
+      }
+
+      await exportEvaluationToPDF(
+        currentSession.username,
+        'group',
+        new Date().toISOString().slice(0, 10),
+        (progress) => {
+          if (progress === 100) {
+            toast.success("PDF downloaded successfully!", { id: loadingToast });
+          }
+        }
+      );
+    } catch (error: any) {
+      const errorMsg = error?.message || "Failed to export PDF. Please try again.";
+      toast.error(errorMsg, { id: loadingToast });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center font-body">
@@ -167,6 +199,8 @@ export default function GroupResultPage() {
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Container for PDF Export */}
+        <div id="evaluation-result">
         {/* Member Selector Pills */}
         <div className="mb-8">
           <p className="text-sm font-semibold text-brown-muted uppercase tracking-wide mb-3">
@@ -384,9 +418,29 @@ export default function GroupResultPage() {
             )}
           </div>
         </div>
+        </div>
+        {/* End PDF Export Container */}
 
         {/* Action Buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 pb-8">
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 bg-white text-brown rounded-xl font-semibold hover:bg-cream-warm transition-colors shadow-md border-2 border-warm-border disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="h-5 w-5" />
+                Save as PDF
+              </>
+            )}
+          </button>
+          
           <Link
             to="/practice/group"
             className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 bg-brown text-cream rounded-xl font-semibold hover:bg-brown/90 transition-colors shadow-lg shadow-brown/10"

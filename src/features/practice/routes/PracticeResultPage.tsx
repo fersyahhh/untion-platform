@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Loader2,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import {
   evaluatePresentation,
@@ -17,6 +18,7 @@ import {
 } from "../../../lib/groq";
 import { supabase } from "../../../lib/supabase";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { exportEvaluationToPDF } from "../../../lib/pdfExport";
 import logoUntion from "../../../assets/icon-untion.png";
 
 export default function PracticeResultPage() {
@@ -24,6 +26,7 @@ export default function PracticeResultPage() {
   const navigate = useNavigate();
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [username, setUsername] = useState("User");
+  const [isExporting, setIsExporting] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -110,6 +113,35 @@ export default function PracticeResultPage() {
       });
   }, [location.state, navigate, t]);
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    const loadingToast = toast.loading("Generating PDF...");
+    
+    try {
+      // Verify element exists
+      const element = document.getElementById('evaluation-result');
+      if (!element) {
+        throw new Error("Evaluation content not found. Please refresh the page.");
+      }
+
+      await exportEvaluationToPDF(
+        username,
+        'solo',
+        new Date().toISOString().slice(0, 10),
+        (progress) => {
+          if (progress === 100) {
+            toast.success("PDF downloaded successfully!", { id: loadingToast });
+          }
+        }
+      );
+    } catch (error: any) {
+      const errorMsg = error?.message || "Failed to export PDF. Please try again.";
+      toast.error(errorMsg, { id: loadingToast });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (!result) {
     return (
       <div className="min-h-screen bg-cream flex flex-col items-center justify-center font-body p-6">
@@ -157,6 +189,8 @@ export default function PracticeResultPage() {
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Container for PDF Export */}
+        <div id="evaluation-result">
         {/* Hero Section - Clean & Professional */}
         <div className="mb-10">
           <div className="flex items-baseline gap-3 mb-3">
@@ -342,12 +376,32 @@ export default function PracticeResultPage() {
             </div>
           </div>
         </div>
+        </div>
+        {/* End PDF Export Container */}
 
-        {/* Action Button */}
-        <div className="mt-10 flex justify-center pb-8">
+        {/* Action Buttons */}
+        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 pb-8">
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white text-brown rounded-xl font-semibold hover:bg-cream-warm transition-colors shadow-md border-2 border-warm-border disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="h-5 w-5" />
+                Save as PDF
+              </>
+            )}
+          </button>
+          
           <Link
             to="/practice/solo"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-brown text-cream rounded-xl font-semibold hover:bg-brown/90 transition-colors shadow-lg shadow-brown/10"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brown text-cream rounded-xl font-semibold hover:bg-brown/90 transition-colors shadow-lg shadow-brown/10"
           >
             <RefreshCw className="h-5 w-5" />
             Practice Again

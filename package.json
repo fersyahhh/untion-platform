@@ -13,6 +13,8 @@
     "@deepgram/sdk": "^5.8.0",
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.3.3",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.33.0",
     "openai": "^7.5.0",
     "react": "^19.2.8",

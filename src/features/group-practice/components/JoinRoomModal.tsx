@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
@@ -15,12 +15,40 @@ export default function JoinRoomModal({ onClose }: JoinRoomModalProps) {
   const [roomCode, setRoomCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleCodeChange = (value: string) => {
-    // Only allow A-Z and 0-9, max 6 characters
+  // Preserve cursor position after uppercase transformation
+  useEffect(() => {
+    if (inputRef.current) {
+      const input = inputRef.current;
+      const length = roomCode.length;
+      // Set cursor to end of input after state update
+      input.setSelectionRange(length, length);
+    }
+  }, [roomCode]);
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Store cursor position before transformation
+    const cursorPosition = e.target.selectionStart || 0;
+    
+    // Clean and transform: only A-Z, 0-9, uppercase, max 6 chars
     const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-    setRoomCode(cleaned);
-    setError(null);
+    
+    // Only update if value actually changed (prevent unnecessary re-renders)
+    if (cleaned !== roomCode) {
+      setRoomCode(cleaned);
+      setError(null);
+      
+      // Restore cursor position after state update (next tick)
+      requestAnimationFrame(() => {
+        if (inputRef.current) {
+          const newPosition = Math.min(cursorPosition, cleaned.length);
+          inputRef.current.setSelectionRange(newPosition, newPosition);
+        }
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,15 +125,21 @@ export default function JoinRoomModal({ onClose }: JoinRoomModalProps) {
             </label>
             
             <input
+              ref={inputRef}
               id="roomCode"
               type="text"
               required
               value={roomCode}
-              onChange={(e) => handleCodeChange(e.target.value)}
+              onChange={handleCodeChange}
               placeholder={t('modal.joinRoom.codePlaceholder')}
               className="w-full rounded-lg border border-warm-border px-4 py-3 text-center text-lg font-bold text-brown placeholder-brown-muted focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20 bg-cream-warm/30 transition-all tracking-wider uppercase"
               disabled={isJoining}
               maxLength={6}
+              autoComplete="off"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck="false"
+              inputMode="text"
               autoFocus
             />
             <div className="mt-2 text-center text-xs text-brown-muted">
