@@ -12,6 +12,10 @@ export async function createRoom(name: string, leaderId: string): Promise<Room> 
   // Generate unique code
   const code = await generateUniqueRoomCode();
   
+  // Get leader's username
+  const { data: { user } } = await supabase.auth.getUser();
+  const leaderUsername = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+  
   // Insert room
   const { data: room, error: roomError } = await supabase
     .from('rooms')
@@ -28,12 +32,13 @@ export async function createRoom(name: string, leaderId: string): Promise<Room> 
     throw new Error(`Failed to create room: ${roomError?.message || 'Unknown error'}`);
   }
   
-  // Add leader as first member
+  // Add leader as first member WITH username
   const { error: memberError } = await supabase
     .from('room_members')
     .insert({
       room_id: room.id,
       user_id: leaderId,
+      username: leaderUsername,
     });
   
   if (memberError) {
@@ -123,12 +128,17 @@ export async function joinRoom(code: string, userId: string): Promise<Room> {
     throw new Error('This room is full (maximum 10 members). Please try another room.');
   }
   
-  // Add user to room
+  // Get user's username
+  const { data: { user } } = await supabase.auth.getUser();
+  const memberUsername = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+  
+  // Add user to room WITH username
   const { error } = await supabase
     .from('room_members')
     .insert({
       room_id: room.id,
       user_id: userId,
+      username: memberUsername,
     });
   
   if (error) {
@@ -161,7 +171,7 @@ export async function leaveRoom(roomId: string, userId: string): Promise<void> {
  * @returns Array of room members with usernames
  */
 export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
-  // Get room members with basic info
+  // Get room members with username from database
   const { data: members, error: membersError } = await supabase
     .from('room_members')
     .select('*')
@@ -176,13 +186,10 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
     return [];
   }
 
-
-  // Get current user to add username
+  // Get current user to add "(You)" suffix
   const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-  // Map members with usernames
-  // For now, we'll use a simple approach: just use user_id as username
-  // In production, you'd want to create a public users table or use RPC
+  // Map members with usernames from database
   const membersWithInfo = members.map((member) => ({
     id: member.id,
     room_id: member.room_id,
@@ -191,10 +198,10 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
     assigned_slide_end: member.assigned_slide_end,
     turn_order: member.turn_order,
     joined_at: member.joined_at,
-    // Use current user's username if it's them, otherwise use 'Member'
+    // Use username from database, fallback to User if not set
     username: member.user_id === currentUser?.id 
-      ? (currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'You')
-      : `Member ${members.indexOf(member) + 1}`,
+      ? `${member.username || 'You'} (You)`
+      : (member.username || 'User'),
     email: member.user_id === currentUser?.id ? currentUser?.email : undefined,
   }));
   

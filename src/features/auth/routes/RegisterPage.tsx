@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
 import { supabase } from "../../../lib/supabase";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -10,6 +11,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useLanguage();
 
@@ -92,17 +94,30 @@ export default function RegisterPage() {
           >
             {t('auth.register.password')}
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="block w-full rounded-xl border border-warm-border px-4 py-3 text-brown placeholder-brown-muted focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal text-base bg-cream-warm/50"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full rounded-xl border border-warm-border px-4 py-3 pr-12 text-brown placeholder-brown-muted focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal text-base bg-cream-warm/50"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-brown-muted hover:text-brown transition-colors p-1"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           <p className="mt-2 text-xs text-brown-muted">
             {t('auth.register.passwordHint')}
           </p>

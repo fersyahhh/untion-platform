@@ -53,7 +53,7 @@ export default function GroupResultPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Fetch all session results with user data
+        // Fetch all session results
         const { data: sessionData, error: sessionError } = await supabase
           .from("room_sessions")
           .select("*")
@@ -61,10 +61,10 @@ export default function GroupResultPage() {
 
         if (sessionError) throw sessionError;
 
-        // Fetch room members to get usernames
+        // Fetch room members WITH usernames
         const { data: members, error: membersError } = await supabase
           .from("room_members")
-          .select("user_id, id")
+          .select("user_id, id, username")
           .eq("room_id", roomId);
 
         if (membersError) throw membersError;
@@ -72,18 +72,20 @@ export default function GroupResultPage() {
         // Get current user to check if any session is theirs
         const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-        // Map sessions with usernames
+        // Map sessions with usernames from room_members table
         const sessionsWithUsernames: SessionResult[] = sessionData.map((session: any) => {
           const isCurrentUser = session.user_id === currentUser?.id;
           
-          // Generate username based on whether it's the current user
+          // Find member in room_members to get username
+          const member = members?.find((m: any) => m.user_id === session.user_id);
+          
           let username = "Unknown User";
           if (isCurrentUser && currentUser) {
-            username = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || "You";
+            // Current user - use their username without (You) suffix
+            username = member?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || "You";
           } else {
-            // For other users, use a generic name based on member index
-            const memberIndex = members?.findIndex((m: any) => m.user_id === session.user_id);
-            username = `Member ${memberIndex !== undefined && memberIndex >= 0 ? memberIndex + 1 : '?'}`;
+            // Other users - use username from room_members
+            username = member?.username || "User";
           }
           
           return {

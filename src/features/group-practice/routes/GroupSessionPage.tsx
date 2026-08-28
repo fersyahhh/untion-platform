@@ -61,6 +61,7 @@ export default function GroupSessionPage() {
   const [timeLeft, setTimeLeft] = useState(5 * 60);
   const [finalParts, setFinalParts] = useState<string[]>([]);
   const [interimText, setInterimText] = useState("");
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   // Refs
   const deepgramRef = useRef<ReturnType<typeof createDeepgramSocket> | null>(null);
@@ -88,6 +89,34 @@ export default function GroupSessionPage() {
   useEffect(() => {
     latestTranscriptRef.current = fullTranscript;
   }, [fullTranscript]);
+
+  // Keyboard navigation for slides
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if it's my turn and can control slide
+      if (!canControlSlide) return;
+      
+      const minSlide = myAssignment?.assigned_slide_start || 1;
+      const maxSlide = myAssignment?.assigned_slide_end || numPages;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const newSlide = Math.max(minSlide, currentSlide - 1);
+        if (newSlide !== currentSlide) {
+          handleSlideChange(newSlide);
+        }
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const newSlide = Math.min(maxSlide, currentSlide + 1);
+        if (newSlide !== currentSlide) {
+          handleSlideChange(newSlide);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canControlSlide, currentSlide, numPages, myAssignment]);
 
   // Load room data from database
   useEffect(() => {
@@ -584,16 +613,18 @@ export default function GroupSessionPage() {
   const handleLeaveRoom = async () => {
     if (!roomId) return;
 
-    const confirm = window.confirm(
-      "Apakah Anda yakin ingin keluar? Progres Anda akan hilang."
-    );
-    if (!confirm) return;
+    setShowLeaveModal(true);
+  };
+
+  const confirmLeaveRoom = async () => {
+    if (!roomId) return;
 
     // Stop recording if active
     if (isRecording) {
       stopRecording();
     }
 
+    setShowLeaveModal(false);
     navigate("/practice/group");
   };
 
@@ -844,6 +875,34 @@ export default function GroupSessionPage() {
           </div>
         </div>
       </main>
+
+      {/* Leave Room Modal */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
+            <h3 className="font-display text-xl sm:text-2xl font-bold text-brown mb-3">
+              Leave Room?
+            </h3>
+            <p className="text-brown-muted mb-6">
+              Apakah Anda yakin ingin keluar? Progres Anda akan hilang dan tidak dapat dikembalikan.
+            </p>
+            <div className="flex gap-3 sm:gap-4">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-warm-border text-brown font-bold hover:bg-cream transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLeaveRoom}
+                className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

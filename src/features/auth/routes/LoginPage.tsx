@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import AuthLayout from "../components/AuthLayout";
 import { supabase } from "../../../lib/supabase";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useLanguage();
 
@@ -68,31 +70,36 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-brown"
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-brown mb-2"
+          >
+            {t('auth.login.password')}
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full rounded-xl border border-warm-border px-4 py-3 pr-12 text-brown placeholder-brown-muted focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal text-base bg-cream-warm/50"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-brown-muted hover:text-brown transition-colors p-1"
             >
-              {t('auth.login.password')}
-            </label>
-            <a
-              href="#"
-              className="text-xs font-semibold text-teal hover:text-teal-light"
-            >
-              {t('auth.login.forgotPassword')}
-            </a>
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
           </div>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="block w-full rounded-xl border border-warm-border px-4 py-3 text-brown placeholder-brown-muted focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal text-base bg-cream-warm/50"
-            placeholder="••••••••"
-          />
         </div>
 
         <div className="pt-2">
