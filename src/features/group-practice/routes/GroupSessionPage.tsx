@@ -265,9 +265,22 @@ export default function GroupSessionPage() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
 
+    // CRITICAL FIX: Wait for Deepgram to finalize transcription
+    // This prevents race condition where transcript is still being processed
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const actualDuration = Math.round((Date.now() - startTimeRef.current) / 1000);
     const transcript = finalParts.join(" ") + (interimText ? " " + interimText : "");
     const hasTranscript = transcript.trim().length > 0;
+    
+    // DEBUG: Log transcript for troubleshooting
+    console.log('[GroupSession] Finish Turn Debug:', {
+      finalPartsLength: finalParts.length,
+      interimTextLength: interimText.length,
+      transcriptLength: transcript.length,
+      hasTranscript,
+      transcript: transcript.slice(0, 100) + '...',
+    });
     const fillerData = hasTranscript
       ? countFillerWords(transcript)
       : { total: 0, breakdown: {} };
@@ -293,7 +306,7 @@ export default function GroupSessionPage() {
             fillerWordCount: fillerData.total,
             fillerBreakdown: fillerData.breakdown,
             longPauses: longPauses,
-            totalSlides: myAssignment?.assigned_slide_end && myAssignment?.assigned_slide_start 
+            totalSlides: myAssignment && myAssignment.assigned_slide_end && myAssignment.assigned_slide_start 
               ? (myAssignment.assigned_slide_end - myAssignment.assigned_slide_start + 1)
               : (room.total_slides || 1),
           };
@@ -471,6 +484,7 @@ export default function GroupSessionPage() {
     finalParts,
     interimText,
     members,
+    myAssignment,
   ]);
 
   const startRecording = useCallback(async () => {
