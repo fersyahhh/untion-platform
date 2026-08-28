@@ -25,7 +25,7 @@ export default function Footer() {
           </p>
 
           <div className="flex items-center gap-6">
-            <a href="#" target="_blank" rel="noreferrer" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
+            <a href="#" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
               GitHub
             </a>
             <a href="#" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
