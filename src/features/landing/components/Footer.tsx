@@ -25,10 +25,10 @@ export default function Footer() {
           </p>
 
           <div className="flex items-center gap-6">
-            <a href="https://github.com/fersyahhh/dies-natalis" target="_blank" rel="noreferrer" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
+            <a href="#" target="_blank" rel="noreferrer" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
               GitHub
             </a>
-            <a href="https://untion.app" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
+            <a href="#" className="text-sm font-medium text-brown-muted transition-colors hover:text-brown">
               Demo
             </a>
           </div>
