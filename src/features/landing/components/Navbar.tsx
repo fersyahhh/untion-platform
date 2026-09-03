@@ -59,7 +59,7 @@ export default function Navbar() {
     };
   }, []);
 
-  // Don't render CTA if auth state is still loading (null)
+  // Auth loading state
   const isLoading = isLoggedIn === null;
 
   return (
@@ -102,7 +102,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* CTA - Always render to prevent layout shift */}
           <div className="hidden items-center gap-3 lg:flex">
             {/* Language Toggle */}
             <button
@@ -114,42 +114,46 @@ export default function Navbar() {
               <span className="uppercase">{language}</span>
             </button>
             
-            {!isLoading && (
-              isLoggedIn ? (
-                <>
-                  <button
-                    onClick={handleLogout}
-                    className="rounded-xl px-5 py-2.5 text-sm font-semibold text-brown-muted transition-colors duration-200 hover:text-brown"
-                  >
-                    {t('nav.logout')}
-                  </button>
-                  <Link
-                    to="/dashboard"
-                    className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-cream shadow-md shadow-teal/20 transition-all duration-200 hover:bg-teal-light hover:shadow-lg hover:shadow-teal/25 active:scale-95"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                    {t('nav.dashboard')}
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    id="nav-signin"
-                    className="rounded-xl px-5 py-2.5 text-sm font-semibold text-brown-muted transition-colors duration-200 hover:text-brown"
-                  >
-                    {t('nav.signIn')}
-                  </Link>
-                  <Link
-                    to="/register"
-                    id="nav-cta"
-                    className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-cream shadow-md shadow-teal/20 transition-all duration-200 hover:bg-teal-light hover:shadow-lg hover:shadow-teal/25 active:scale-95"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                    {t('nav.getStarted')}
-                  </Link>
-                </>
-              )
+            {isLoading ? (
+              // Loading skeleton - prevents layout shift
+              <>
+                <div className="h-9 w-20 rounded-xl bg-warm-border/30 animate-pulse" />
+                <div className="h-9 w-32 rounded-full bg-warm-border/30 animate-pulse" />
+              </>
+            ) : isLoggedIn ? (
+              <>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-brown-muted transition-colors duration-200 hover:text-brown"
+                >
+                  {t('nav.logout')}
+                </button>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-cream shadow-md shadow-teal/20 transition-all duration-200 hover:bg-teal-light hover:shadow-lg hover:shadow-teal/25 active:scale-95"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  {t('nav.dashboard')}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  id="nav-signin"
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-brown-muted transition-colors duration-200 hover:text-brown"
+                >
+                  {t('nav.signIn')}
+                </Link>
+                <Link
+                  to="/register"
+                  id="nav-cta"
+                  className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-cream shadow-md shadow-teal/20 transition-all duration-200 hover:bg-teal-light hover:shadow-lg hover:shadow-teal/25 active:scale-95"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  {t('nav.getStarted')}
+                </Link>
+              </>
             )}
           </div>
 
@@ -189,40 +193,44 @@ export default function Navbar() {
               </button>
               
               <div className="mt-2 flex flex-col gap-2">
-                {!isLoading && (
-                  isLoggedIn ? (
-                    <>
-                      <Link
-                        to="/dashboard"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brown px-5 py-3 text-center text-sm font-semibold text-cream shadow-md shadow-brown/20"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        {t('nav.dashboard')}
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-transparent border border-warm-border px-5 py-3 text-center text-sm font-semibold text-brown shadow-sm"
-                      >
-                        {t('nav.logout')}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        to="/register"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brown px-5 py-3 text-center text-sm font-semibold text-cream shadow-md shadow-brown/20"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        {t('nav.getStarted')}
-                      </Link>
-                      <Link
-                        to="/login"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-transparent border border-warm-border px-5 py-3 text-center text-sm font-semibold text-brown shadow-sm"
-                      >
-                        {t('nav.signIn')}
-                      </Link>
-                    </>
-                  )
+                {isLoading ? (
+                  // Loading skeleton for mobile
+                  <>
+                    <div className="h-12 w-full rounded-xl bg-warm-border/30 animate-pulse" />
+                    <div className="h-12 w-full rounded-xl bg-warm-border/30 animate-pulse" />
+                  </>
+                ) : isLoggedIn ? (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brown px-5 py-3 text-center text-sm font-semibold text-cream shadow-md shadow-brown/20"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                      {t('nav.dashboard')}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-transparent border border-warm-border px-5 py-3 text-center text-sm font-semibold text-brown shadow-sm"
+                    >
+                      {t('nav.logout')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-brown px-5 py-3 text-center text-sm font-semibold text-cream shadow-md shadow-brown/20"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                      {t('nav.getStarted')}
+                    </Link>
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-transparent border border-warm-border px-5 py-3 text-center text-sm font-semibold text-brown shadow-sm"
+                    >
+                      {t('nav.signIn')}
+                    </Link>
+                  </>
                 )}
               </div>
             </div>

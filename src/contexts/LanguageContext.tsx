@@ -586,9 +586,9 @@ const translations: Record<Language, Record<string, string>> = {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    // Get from localStorage or default to 'id'
+    // Get from localStorage or default to 'en'
     const saved = localStorage.getItem('language');
-    return (saved === 'en' || saved === 'id') ? saved : 'id';
+    return (saved === 'en' || saved === 'id') ? saved : 'en';
   });
 
   const setLanguage = (lang: Language) => {
