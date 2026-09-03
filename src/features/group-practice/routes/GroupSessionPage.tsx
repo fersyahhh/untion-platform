@@ -315,12 +315,14 @@ export default function GroupSessionPage() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     setIsRecording(false);
 
+    // CRITICAL: Calculate duration BEFORE delays to get actual speaking time
+    const endTime = Date.now();
+    const actualDuration = Math.round((endTime - startTimeRef.current) / 1000);
+
     // CRITICAL FIX: Wait longer for Deepgram to finalize ALL transcription
     // Increased from 1s to 2s to ensure all chunks are processed
     console.log('[GroupSession] Waiting for Deepgram to finalize...');
     await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const actualDuration = Math.round((Date.now() - startTimeRef.current) / 1000);
     
     // CRITICAL: Use ref to get latest transcript (avoid stale closure)
     const transcript = latestTranscriptRef.current;

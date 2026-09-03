@@ -81,13 +81,14 @@ export default function PracticeSessionPage() {
     finishedRef.current = true;
 
     if (timerRef.current) clearInterval(timerRef.current);
+    
+    // Calculate duration before stopping to get accurate speaking time
+    const endTime = Date.now();
+    const actualDuration = Math.round((endTime - startTimeRef.current) / 1000);
+    
     mediaRecorderRef.current?.stop();
     deepgramRef.current?.close();
     streamRef.current?.getTracks().forEach((track) => track.stop());
-
-    const actualDuration = Math.round(
-      (Date.now() - startTimeRef.current) / 1000,
-    );
     const transcript = finalParts.join(" ") + (interimText ? " " + interimText : "");
     
     // Handle empty transcript - set all metrics to 0
